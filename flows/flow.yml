@@ -1,0 +1,31 @@
+id: debezium-to-output
+namespace: dev
+description: Testing debezium plugin on local env and output table changes to stdout
+
+tasks:
+  - id: capture-db-changes
+    type: io.kestra.plugin.debezium.postgres.Capture
+    hostname: 192.168.0.137
+    port: "5432"
+    username: postgres
+    password: postgres
+    database: postgres
+    format: WRAP
+    excludedTables: ["public.*", "test.*"]
+    maxWait: 2
+    # maxDuration: "100"
+    snapshotMode: ALWAYS
+
+  - id: capture-task-output
+    type: io.kestra.core.tasks.debugs.Return
+    format: "Changed Records: {{ capture-db-changes.outputs }}"
+
+
+  # - id: write-to-csv
+  #   type: io.kestra.plugin.serdes.csv.CsvWriter
+  #   from: "{{outputs['capture-db-changes'].uri}}"
+
+triggers:
+  - id: minute
+    type: io.kestra.core.models.triggers.types.Schedule
+    cron:  "*/1 * * * *"
